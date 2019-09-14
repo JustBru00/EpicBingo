@@ -7,8 +7,10 @@ import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 
 import com.gmail.justbru00.epic.bingo.playerdata.BingoObjective;
+import com.gmail.justbru00.epic.bingo.playerdata.ItemDetectionType;
 import com.gmail.justbru00.epic.bingo.playerdata.PlayerBingoData;
 
 public class BingoObjectivesManager {
@@ -17,6 +19,14 @@ public class BingoObjectivesManager {
 	private static ArrayList<UUID> bingoPlayers = new ArrayList<UUID>();
 	private static ArrayList<UUID> finishedBingoPlayers = new ArrayList<UUID>();
 	private static HashMap<UUID, Instant> bingoCompletedAt = new HashMap<UUID, Instant>();
+	
+	public static void notifyAllOfItemDetection(ItemDetectionType type, ItemStack item, Player player) {
+		for (PlayerBingoData pbd : bingoPlayerData) {
+			for (BingoObjective objective : pbd.getObjectives()) {
+				objective.notifyOfItemDetection(type, item, player);
+			}
+		}
+	}
 	
 	/**
 	 * This variable stores the list of the objectives for this current game.
@@ -61,6 +71,90 @@ public class BingoObjectivesManager {
 		// 1 1 2 1 1
 		// 2 1 1 1 2
 		// 1 = easy, 2 = medium, 3 = hard
+		
+	}
+
+	public static void updateFinishedBingoPlayers() {		
+		for (PlayerBingoData pbd : bingoPlayerData) {
+			if (finishedBingoPlayers.contains(pbd.getPlayerUuid())) {
+				continue;
+			}
+			
+			ArrayList<Boolean> completedSuccessfully = new ArrayList<Boolean>();
+			
+			for (BingoObjective bo : pbd.getObjectives()) {
+				completedSuccessfully.add((bo.isComplete() && !bo.isFailed()));
+			}
+			
+			// The most inefficient way to do the following, but I can't think of a better way right now.
+			// 00 01 02 03 04 
+			// 05 06 07 08 09
+			// 10 11 12 13 14
+			// 15 16 17 18 19
+			// 20 21 22 23 24			
+			
+			Boolean[] bingoCard = (Boolean[]) completedSuccessfully.toArray();
+			
+			// ROWS
+			Integer[] rowNumbers = {0, 1, 2, 3, 4};
+			boolean rowTracker = false;
+			
+			for (int i = 0; i < 21; i = i+5) {				
+				for (Integer slotNum : rowNumbers) {
+					rowTracker = bingoCard[slotNum + i];
+				}
+			
+				if (rowTracker) {
+					// Row is totally TRUE
+					finishedBingoPlayers.add(pbd.getPlayerUuid());
+					continue;
+				}
+			
+			}
+			
+			// COLUMNS
+			Integer[] columnNumbers = {0, 5, 10, 15, 20};
+			boolean columnTracker = false;
+			
+			for (int i = 0; i < 25; i = i++) {				
+				for (Integer slotNum : columnNumbers) {
+					columnTracker = bingoCard[slotNum + i];
+				}
+			
+				if (columnTracker) {
+					// Column is totally TRUE
+					finishedBingoPlayers.add(pbd.getPlayerUuid());
+					continue;
+				}
+			
+			}
+			
+			// DIAGONAL
+			Integer[] diagonalOne = {0, 6, 12, 18, 24};
+			Integer[] diagonalTwo = {4, 8, 12, 16, 20};
+			boolean diagonalTracker = false;
+			
+			for (Integer slotNum : diagonalOne) {
+				diagonalTracker = bingoCard[slotNum];
+			}
+			
+			if (diagonalTracker) {
+				// Diagonal Row DONE
+				finishedBingoPlayers.add(pbd.getPlayerUuid());
+				continue;
+			}
+			
+			for (Integer slotNum : diagonalTwo) {
+				diagonalTracker = bingoCard[slotNum];
+			}
+			
+			if (diagonalTracker) {
+				// Diagonal Row DONE
+				finishedBingoPlayers.add(pbd.getPlayerUuid());
+				continue;
+			}
+			
+		}		
 		
 	}
 	

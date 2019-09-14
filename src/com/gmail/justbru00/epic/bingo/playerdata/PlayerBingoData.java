@@ -7,6 +7,9 @@ public class PlayerBingoData {
 
 	private ArrayList<BingoObjective> objectives;
 	private UUID playerUuid;
+	/**
+	 * This boolean is true if the player has completed a bingo row, column, or diagonal.
+	 */
 	private boolean bingoComplete = false;
 	
 	public PlayerBingoData(UUID uuid, ArrayList<BingoObjective> _objectives) {
